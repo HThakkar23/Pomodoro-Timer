@@ -25,46 +25,45 @@ jobs:
       - name: Detect package manager
         id: detect-package-manager
         run: |
-          if [ -f "${{ github.workspace }}/Study-Planner/pnpm-lock.yaml" ]; then
+          if [ -f "Study-Planner/pnpm-lock.yaml" ]; then
             echo "manager=pnpm" >> $GITHUB_OUTPUT
-            echo "command=install" >> $GITHUB_OUTPUT
-            echo "runner=pnpm --dir Study-Planner" >> $GITHUB_OUTPUT
-          elif [ -f "${{ github.workspace }}/Study-Planner/yarn.lock" ]; then
+          elif [ -f "Study-Planner/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
-            echo "command=install" >> $GITHUB_OUTPUT
-            echo "runner=yarn --cwd Study-Planner" >> $GITHUB_OUTPUT
-          elif [ -f "${{ github.workspace }}/Study-Planner/package.json" ]; then
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=ci" >> $GITHUB_OUTPUT
-            echo "runner=npx --no-install --prefix Study-Planner" >> $GITHUB_OUTPUT
           else
-            echo "Unable to determine package manager"
-            exit 1
+            echo "manager=npm" >> $GITHUB_OUTPUT
           fi
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: 18
           cache: ${{ steps.detect-package-manager.outputs.manager }}
 
-      - name: Install pnpm
+      - name: Install pnpm (only if needed)
         if: ${{ steps.detect-package-manager.outputs.manager == 'pnpm' }}
         run: npm install -g pnpm
 
       - name: Install dependencies
-        run: ${{ steps.detect-package-manager.outputs.runner }} ${{ steps.detect-package-manager.outputs.command }}
+        run: |
+          if [ "${{ steps.detect-package-manager.outputs.manager }}" == "pnpm" ]; then
+            pnpm --dir Study-Planner install
+          elif [ "${{ steps.detect-package-manager.outputs.manager }}" == "yarn" ]; then
+            yarn --cwd Study-Planner install
+          else
+            npm --prefix Study-Planner ci
+          fi
 
       - name: Build with Next.js
-        run: ${{ steps.detect-package-manager.outputs.runner }} next build
+        run: pnpm --dir Study-Planner next build
 
       - name: Export static site
-        run: ${{ steps.detect-package-manager.outputs.runner }} next export
+        run: pnpm --dir Study-Planner next export
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: Study-Planner/out
+
 
 
   deploy:
