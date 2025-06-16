@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Detect package manager
@@ -28,7 +28,7 @@ jobs:
           if [ -f "${{ github.workspace }}/Study-Planner/pnpm-lock.yaml" ]; then
             echo "manager=pnpm" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
-            echo "runner=pnpm --prefix Study-Planner" >> $GITHUB_OUTPUT
+            echo "runner=pnpm --dir Study-Planner" >> $GITHUB_OUTPUT
           elif [ -f "${{ github.workspace }}/Study-Planner/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
@@ -42,31 +42,6 @@ jobs:
             exit 1
           fi
 
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: ${{ steps.detect-package-manager.outputs.manager }}
-
-      - name: Setup pnpm
-        if: ${{ steps.detect-package-manager.outputs.manager == 'pnpm' }}
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
-
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          static_site_generator: next
-
-      - name: Restore Next.js cache
-        uses: actions/cache@v4
-        with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml', '**/package-lock.json', '**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -89,7 +64,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          path: Study-Planner/out
+
 
   deploy:
     environment:
